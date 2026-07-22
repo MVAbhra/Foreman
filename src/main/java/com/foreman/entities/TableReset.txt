@@ -1,0 +1,15 @@
+DELETE FROM comment;
+DELETE FROM task;
+DELETE FROM project_membership;
+DELETE FROM project;
+DELETE FROM workspace_membership;
+DELETE FROM workspace;
+DELETE FROM users;
+
+ALTER TABLE comments AUTO_INCREMENT = 1;
+ALTER TABLE tasks AUTO_INCREMENT = 1;
+ALTER TABLE project_membership AUTO_INCREMENT = 1;
+ALTER TABLE projects AUTO_INCREMENT = 1;
+ALTER TABLE workspace_membership AUTO_INCREMENT = 1;
+ALTER TABLE workspaces AUTO_INCREMENT = 1;
+ALTER TABLE users AUTO_INCREMENT = 1;
