@@ -1,13 +1,16 @@
 package com.foreman.repos;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.WorkspaceMembership;
 
+@Repository
 public interface WorkspaceMembershipRepo extends JpaRepository<WorkspaceMembership, Long> {
 
 	void deleteByWorkspace_Id(Long id);
@@ -16,14 +19,30 @@ public interface WorkspaceMembershipRepo extends JpaRepository<WorkspaceMembersh
 
 	boolean existsByWorkspace_IdAndUser_Id(Long id, Long id2);
 
+	
 	@Query("""
-			select new com.foreman.dtos.UserDisplayResponseDto(u.id, u.firstName, u.lastName, u.email, :workspaceId, wm.workspaceRole, null, null)
-			from
-			WorkspaceMembership wm
-			JOIN
-			wm.user u
-			WHERE
-			wm.workspace.id = :workspaceId
-	""")
-	List<UserDisplayResponseDto> findWorkspaceMembers(Long workspaceId);
+			SELECT new com.foreman.dtos.UserDisplayResponseDto(
+				wm.user.id, wm.user.firstName, wm.user.lastName, wm.user.email, 
+				wm.workspace.id, wm.workspaceRole, 
+				null, null
+			)
+			FROM WorkspaceMembership wm
+			WHERE wm.workspace.id = :wrkspcId
+			""")
+	List<UserDisplayResponseDto> getWorkspaceMembers(Long wrkspcId);
+
+	
+	@Query("""
+			SELECT new com.foreman.dtos.UserDisplayResponseDto(
+				wm.user.id, wm.user.firstName, wm.user.lastName, wm.user.email, 
+				wm.workspace.id, wm.workspaceRole, 
+				null, null
+			)
+			FROM WorkspaceMembership wm
+			WHERE wm.workspace.id = :wrkspcId
+			AND wm.user.id = :memId
+			""")
+	Optional<UserDisplayResponseDto> getOneWorkspaceMember(Long wrkspcId, Long memId);
+
+	Optional<WorkspaceMembership> findByWorkspace_IdAndUser_Id(Long wrkspcId, Long userId);
 }

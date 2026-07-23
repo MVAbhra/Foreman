@@ -5,11 +5,13 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.ProjectMembership;
 import com.foreman.enums.ProjectRole;
 
+@Repository
 public interface ProjectMembershipRepo extends JpaRepository<ProjectMembership, Long> {
 
 	ProjectMembership findByProject_IdAndProjectRole(Long id, ProjectRole role);

@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.dtos.WorkspaceCreationAndUpdationDto;
-import com.foreman.dtos.WrkMemInvDto;
 import com.foreman.entities.Workspace;
 import com.foreman.services.WorkspaceService;
 
@@ -71,30 +69,5 @@ public class WorkspaceController {
 		workspaceService.deleteOneWorkspace(wrkspcId);
 		
 		return ResponseEntity.status(HttpStatus.OK).body("Workspace deleted!");
-	}
-	
-	
-	@GetMapping("/{wrkspcId}/members")
-	public ResponseEntity<List<UserDisplayResponseDto>> getAllMembersOfOneWrkSpc(@PathVariable Long wrkspcId) {
-		
-		List<UserDisplayResponseDto> members = workspaceService.getAllMembersOfOneWrkSpc(wrkspcId);
-		
-		return ResponseEntity.status(HttpStatus.OK).body(members);
-	}
-	
-	
-	@PostMapping("/{wrkspcId}/members")
-	public ResponseEntity<String> addOneMember(@PathVariable Long wrkspcId, @RequestBody WrkMemInvDto dto) {
-		
-		workspaceService.addOneMember(wrkspcId, dto);
-		
-		return ResponseEntity.status(HttpStatus.OK).body("Member "+dto.getUserId()+" added to workspace "+wrkspcId);
-	}
-	
-	
-	@DeleteMapping("/{wrkspcId}/members/delete/{memid}")
-	public ResponseEntity<String> deleteOneMember(@PathVariable Long wrkspcId, @PathVariable Long memid) {
-		
-		return ResponseEntity.status(HttpStatus.OK).body("Member "+memid+" removed from workspace "+wrkspcId);
 	}
 }
