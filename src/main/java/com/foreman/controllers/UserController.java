@@ -14,19 +14,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.foreman.dtos.UserResponseDto;
+import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.User;
 import com.foreman.services.UserService;
 
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 public class UserController {
 	
 	@Autowired
 	private UserService userService;
 
-	@GetMapping("/all")
+	@GetMapping
 	public ResponseEntity<List<User>> getAllUsers() {
 		
 		List<User> users = userService.getAllUsers();
@@ -36,15 +36,15 @@ public class UserController {
 	
 	
 	@GetMapping("/{id}")
-	public ResponseEntity<UserResponseDto> getOneUser(@PathVariable Long id) {
+	public ResponseEntity<UserDisplayResponseDto> getOneUser(@PathVariable Long id) {
 		
-		UserResponseDto userResponseDto = userService.getOneUser(id);
+		UserDisplayResponseDto userDisplayResponseDto = userService.getOneUser(id);
 		
-		return ResponseEntity.ok(userResponseDto);
+		return ResponseEntity.ok(userDisplayResponseDto);
 	}
 	
 	
-	@PostMapping("/register")
+	@PostMapping
 	public ResponseEntity<String> addOneUser(@RequestBody User user) {
 		
 		userService.addOneUser(user);

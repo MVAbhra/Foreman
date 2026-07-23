@@ -52,7 +52,7 @@ public class Project {
 
 	@Override
 	public String toString() {
-		return "Project [id=" + id + ", title=" + title + ", description=" + description + ", workspace="
-				+ workspace.getId() + ", createdOn=" + createdOn + "]";
+		return "Project [id=" + id + ", title=" + title + ", description=" + description + ", workspace=" + workspace
+				+ ", createdOn=" + createdOn + "]";
 	}
 }

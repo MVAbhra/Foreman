@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter
-public class WorkspaceRequestDto {
+public class WorkspaceCreationAndUpdationDto {
 
 	private String name;
-	private Long userId;
+	private Long ownerId;
 }

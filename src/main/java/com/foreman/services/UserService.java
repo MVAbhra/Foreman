@@ -7,11 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.foreman.dtos.UserResponseDto;
+import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.User;
+import com.foreman.exception.DuplicateResourceException;
+import com.foreman.exception.ResourceNotFoundException;
 import com.foreman.repos.UserRepo;
 import com.foreman.repos.WorkspaceMembershipRepo;
-import com.foreman.repos.WorkspaceRepo;
 
 @Service
 @Transactional
@@ -19,9 +20,6 @@ public class UserService {
 	
 	@Autowired
 	private UserRepo userRepo;
-	
-	@Autowired
-	private WorkspaceRepo wRepo;
 	
 	@Autowired
 	private WorkspaceMembershipRepo wmRepo;
@@ -34,25 +32,34 @@ public class UserService {
 	}
 
 	
-	public UserResponseDto getOneUser(Long id) {
+	public UserDisplayResponseDto getOneUser(Long id) {
 		
 		User result = userRepo.findById(id).orElseThrow(() -> 
-							new RuntimeException("No such user exists with that id"));
+							new ResourceNotFoundException("No such user exists with that id"));
 		
-		UserResponseDto userResponseDto = new UserResponseDto
+		UserDisplayResponseDto userDisplayResponseDto = new UserDisplayResponseDto
 				
 				(
 					result.getId(),
 					result.getFirstName(),
 					result.getLastName(),
-					result.getEmail()
+					result.getEmail(),
+					null,
+					null,
+					null,
+					null
 				);
 		
-		return userResponseDto;
+		return userDisplayResponseDto;
 	}
 	
 	
 	public void addOneUser(User user) {
+		
+		if(userRepo.existsByEmail(user.getEmail())){
+			
+			throw new DuplicateResourceException("User with email "+user.getEmail()+" already exists!");
+		}
 		
 		user.setCreatedOn(LocalDate.now());
 		userRepo.save(user);
@@ -62,7 +69,7 @@ public class UserService {
 	public User updateOneUser(User dto, Long id) {
 
 		User userToBeUpdated = userRepo.findById(id).orElseThrow(() -> 
-								new RuntimeException("No such user exists with that id"));
+								new ResourceNotFoundException("No such user exists with that id"));
 		
 		userToBeUpdated.setFirstName(dto.getFirstName());
 		userToBeUpdated.setLastName(dto.getLastName());
@@ -78,12 +85,10 @@ public class UserService {
 	public User deleteOneUser(Long id) {
 		
 		User u = userRepo.findById(id).orElseThrow(() -> 
-							new RuntimeException("No such user exists with that id"));
+							new ResourceNotFoundException("No such user exists with that id"));
 		
 		
 		wmRepo.deleteByUser_Id(u.getId());
-		
-		wRepo.deleteByOwner_Id(u.getId());
 		
 		userRepo.delete(u);
 		

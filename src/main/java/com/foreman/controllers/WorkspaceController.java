@@ -14,20 +14,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.foreman.dtos.WorkspaceRequestDto;
+import com.foreman.dtos.UserDisplayResponseDto;
+import com.foreman.dtos.WorkspaceCreationAndUpdationDto;
 import com.foreman.dtos.WrkMemInvDto;
 import com.foreman.entities.Workspace;
 import com.foreman.services.WorkspaceService;
 
 @RestController
-@RequestMapping("/api/workspace")
+@RequestMapping("/api/workspaces")
 public class WorkspaceController {
 
 	@Autowired
 	private WorkspaceService workspaceService;
 
 	
-	@GetMapping("/all")
+	@GetMapping
 	public ResponseEntity<List<Workspace>> getAllWorkspaces() {
 		
 		List<Workspace> workspaces = workspaceService.getAllWorkspaces();
@@ -36,17 +37,17 @@ public class WorkspaceController {
 	}
 	
 	
-	@GetMapping("/{id}")
-	public ResponseEntity<Workspace> getOneWorkspace(@PathVariable Long id) {
+	@GetMapping("/{wrkspcId}")
+	public ResponseEntity<Workspace> getOneWorkspace(@PathVariable Long wrkspcId) {
 		
-		Workspace workspace = workspaceService.getOneWorkspace(id);
+		Workspace workspace = workspaceService.getOneWorkspace(wrkspcId);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(workspace);
 	}
 	
 	
-	@PostMapping("/create")
-	public ResponseEntity<String> addOneWorkspace(@RequestBody WorkspaceRequestDto dto) {
+	@PostMapping
+	public ResponseEntity<String> addOneWorkspace(@RequestBody WorkspaceCreationAndUpdationDto dto) {
 		
 		workspaceService.addOneWorkspace(dto);
 		
@@ -54,36 +55,46 @@ public class WorkspaceController {
 	}
 	
 	
-	@PutMapping("/{id}/update")
-	public ResponseEntity<Workspace> updateOneWorkspace(@PathVariable Long id, @RequestBody WorkspaceRequestDto dto) {
+	@PutMapping("/{wrkspcId}/update")
+	public ResponseEntity<Workspace> updateOneWorkspace(@PathVariable Long wrkspcId, 
+			@RequestBody WorkspaceCreationAndUpdationDto dto) {
 		
-		Workspace w = workspaceService.updateOneWorkspace(id, dto);
+		Workspace w = workspaceService.updateOneWorkspace(wrkspcId, dto);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(w);
 	}
 	
 	
-	@DeleteMapping("/{id}/delete")
-	public ResponseEntity<String> deleteOneWorkspace(@PathVariable Long id) {
+	@DeleteMapping("/{wrkspcId}/delete")
+	public ResponseEntity<String> deleteOneWorkspace(@PathVariable Long wrkspcId) {
 		
-		workspaceService.deleteOneWorkspace(id);
+		workspaceService.deleteOneWorkspace(wrkspcId);
 		
 		return ResponseEntity.status(HttpStatus.OK).body("Workspace deleted!");
 	}
 	
 	
-	@PostMapping("/{id}/member/add")
-	public ResponseEntity<String> addOneMember(@PathVariable Long id, @RequestBody WrkMemInvDto dto) {
+	@GetMapping("/{wrkspcId}/members")
+	public ResponseEntity<List<UserDisplayResponseDto>> getAllMembersOfOneWrkSpc(@PathVariable Long wrkspcId) {
 		
-		workspaceService.addOneMember(id, dto);
+		List<UserDisplayResponseDto> members = workspaceService.getAllMembersOfOneWrkSpc(wrkspcId);
 		
-		return ResponseEntity.status(HttpStatus.OK).body("Member "+dto.getUserId()+" added to workspace "+id);
+		return ResponseEntity.status(HttpStatus.OK).body(members);
 	}
 	
 	
-//	@DeleteMapping("/{id}/member/delete/{memid}")
-//	public ResponseEntity<String> deleteOneMember(@PathVariable Long id, @PathVariable Long memid) {
-//		
-//		return ResponseEntity.status(HttpStatus.OK).body("Member "+memid+" removed from workspace "+id);
-//	}
+	@PostMapping("/{wrkspcId}/members")
+	public ResponseEntity<String> addOneMember(@PathVariable Long wrkspcId, @RequestBody WrkMemInvDto dto) {
+		
+		workspaceService.addOneMember(wrkspcId, dto);
+		
+		return ResponseEntity.status(HttpStatus.OK).body("Member "+dto.getUserId()+" added to workspace "+wrkspcId);
+	}
+	
+	
+	@DeleteMapping("/{wrkspcId}/members/delete/{memid}")
+	public ResponseEntity<String> deleteOneMember(@PathVariable Long wrkspcId, @PathVariable Long memid) {
+		
+		return ResponseEntity.status(HttpStatus.OK).body("Member "+memid+" removed from workspace "+wrkspcId);
+	}
 }

@@ -11,4 +11,6 @@ import com.foreman.entities.User;
 public interface UserRepo extends JpaRepository<User, Long> {
 
 	Optional<User> findById(Long id);
+
+	boolean existsByEmail(String email);
 }

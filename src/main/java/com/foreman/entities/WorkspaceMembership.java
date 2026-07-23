@@ -21,7 +21,7 @@ import lombok.Setter;
 
 @Getter @Setter @NoArgsConstructor
 @Entity
-@Table(name = "workspace_membership")
+@Table(name = "workspace_memberships")
 public class WorkspaceMembership {
 
 	@Id

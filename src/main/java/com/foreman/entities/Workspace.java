@@ -7,8 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -31,23 +29,18 @@ public class Workspace {
 	@Column(name = "created_on")
 	private LocalDate createdOn;
 	
-	@ManyToOne
-	@JoinColumn(name = "owner_id")
-	private User owner;
-
 	
-	public Workspace(String name, User owner) {
+	public Workspace(String name) {
 
 		super();
 		this.id = null;
 		this.name = name;
 		this.createdOn = LocalDate.now();
-		this.owner = owner;
 	}
 
 
 	@Override
 	public String toString() {
-		return "Workspace [id=" + id + ", name=" + name + ", createdOn=" + createdOn + ", ownerId=" + owner + "]";
+		return "Workspace [id=" + id + ", name=" + name + ", createdOn=" + createdOn + "]";
 	}
 }

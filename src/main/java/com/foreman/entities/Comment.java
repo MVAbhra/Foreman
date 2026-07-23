@@ -1,6 +1,6 @@
 package com.foreman.entities;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -37,7 +37,7 @@ public class Comment {
 	private User commenter;
 
 	@Column(name = "created_on")
-	private LocalDate createdOn;
+	private LocalDateTime createdOn;
 
 	
 	public Comment(String message, Task task, User commenter) {
@@ -47,7 +47,7 @@ public class Comment {
 		this.message = message;
 		this.task = task;
 		this.commenter = commenter;
-		this.createdOn = LocalDate.now();
+		this.createdOn = LocalDateTime.now();
 	}
 
 
