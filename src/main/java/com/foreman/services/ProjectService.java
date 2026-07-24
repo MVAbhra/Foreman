@@ -80,13 +80,7 @@ public class ProjectService {
 	
 	public ProjectDisplayDto getOneProject(Long wrkspcId, Long projId) {
 		
-		if(wRepo.existsById(wrkspcId) == false) {
-			
-			throw new ResourceNotFoundException("Workspace "+wrkspcId+" does not exist!");
-		}
-		
-		Project p = projRepo.findByIdAndWorkspace_Id(projId, wrkspcId).orElseThrow(() -> 
-		new ResourceNotFoundException("Workspace "+wrkspcId+" does not contain project "+projId+"!")); 
+		 Project p = checkProjectExistenceInWorkspace(wrkspcId, projId);
 		
 //		ProjectMembership managerMembership = projMemRepo.findByProject_IdAndProjectRole(projId, ProjectRole.valueOf("PROJECT_MANAGER"));
 		
@@ -140,5 +134,22 @@ public class ProjectService {
 		projMemRepo.deleteAll(pms);
 		
 		projRepo.delete(p);
+	}
+	
+	
+	//----------------------------- Utility methods ---------------------------------------
+	
+	
+	public Project checkProjectExistenceInWorkspace(Long wrkspcId, Long projId) {
+		
+		if(wRepo.existsById(wrkspcId) == false) {
+			
+			throw new ResourceNotFoundException("Workspace "+wrkspcId+" does not exist!");
+		}
+		
+		Project p = projRepo.findByIdAndWorkspace_Id(projId, wrkspcId).orElseThrow(() -> 
+		new ResourceNotFoundException("Workspace "+wrkspcId+" does not contain project "+projId+"!"));
+		
+		return p;
 	}
 }

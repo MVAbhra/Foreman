@@ -29,31 +29,31 @@ public class Comment {
 	private String message;
 	
 	@ManyToOne
-	@JoinColumn(name = "task_id")
+	@JoinColumn(name = "task_id", nullable = false)
 	private Task task;
 	
 	@ManyToOne
-	@JoinColumn(name = "commenter_id")
-	private User commenter;
+	@JoinColumn(name = "commenter_id", nullable = false)
+	private User user;
 
-	@Column(name = "created_on")
+	@Column(name = "created_on", nullable = false)
 	private LocalDateTime createdOn;
 
 	
-	public Comment(String message, Task task, User commenter) {
+	public Comment(String message, Task task, User user) {
 	
 		super();
 		this.id = null;
 		this.message = message;
 		this.task = task;
-		this.commenter = commenter;
+		this.user = user;
 		this.createdOn = LocalDateTime.now();
 	}
 
 
 	@Override
 	public String toString() {
-		return "Comment [id=" + id + ", message=" + message + ", task=" + task.getId() + ", commenter=" + commenter.getId()
+		return "Comment [id=" + id + ", message=" + message + ", task=" + task.getId() + ", user=" + user.getId()
 				+ ", createdOn=" + createdOn + "]";
 	}	
 }

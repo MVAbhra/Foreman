@@ -48,7 +48,7 @@ public class ProjectMembershipService {
 		
 		return projMembers;
 	}
-
+	
 
 	public UserDisplayResponseDto getOneProjectMember(Long wrkspcId, Long projId, Long memId) {
 
@@ -124,5 +124,19 @@ public class ProjectMembershipService {
 				new ResourceNotFoundException("User "+memId+" does not exist in project "+projId+"!"));
 		
 		projMemRepo.delete(pm);
-	}		
+	}
+	
+	
+	//-----------------------------------------Utility methods--------------------------------------------------
+	
+	
+	public User checkUserExistenceInProject(Long wrkspcId, Long projId, Long memId) {
+		
+		projService.checkProjectExistenceInWorkspace(wrkspcId, projId);
+		
+		ProjectMembership pm = projMemRepo.findByProject_IdAndUser_Id(projId, memId).orElseThrow(() -> 
+				new ResourceNotFoundException("User "+memId+" does not exist in project "+projId+"!"));
+		
+		return pm.getUser();
+	}
 }

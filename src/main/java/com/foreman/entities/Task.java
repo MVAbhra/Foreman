@@ -1,6 +1,6 @@
 package com.foreman.entities;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import com.foreman.enums.TaskPriority;
 import com.foreman.enums.TaskStatus;
@@ -37,41 +37,45 @@ public class Task {
 	private String description;
 	
 	@ManyToOne
-	@JoinColumn(name = "project_id")
+	@JoinColumn(name = "project_id", nullable = false)
 	private Project project;
 	
 	@ManyToOne
-	@JoinColumn(name = "assignee_id")
-	private User assignee;
+	@JoinColumn(name = "assignee_id", nullable = true)
+	private User user;
 	
 	@Enumerated(EnumType.STRING)
-	@Column(name = "task_priority")
-	private TaskPriority taskPriority;
+	@Column(name = "task_priority", nullable = false)
+	private TaskPriority priority;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "task_status")
-	private TaskStatus taskStatus;
+	@Column(name = "task_status", nullable = false)
+	private TaskStatus status;
 	
-	@Column(name = "created_on")
-	private LocalDate createdOn;
+	@Column(name = "created_on", nullable = false)
+	private LocalDateTime createdOn;
 	
-	public Task(String title, String description, Project project, User assignee, TaskPriority taskPriority, TaskStatus taskStatus) {
+	@Column(name = "due_date", nullable = false)
+	private LocalDateTime dueDate;
+	
+	public Task(String title, String description, Project project, User assignee, TaskPriority priority, TaskStatus status, LocalDateTime dueDate) {
 		
 		super();
 		this.id = null;
 		this.title = title;
 		this.description = description;
 		this.project = project;
-		this.createdOn = LocalDate.now();
-		this.assignee = assignee;
-		this.taskPriority = taskPriority;
-		this.taskStatus = taskStatus;
+		this.user = assignee;
+		this.priority = priority;
+		this.status = status;
+		this.createdOn = LocalDateTime.now();
+		this.dueDate = dueDate;
 	}
 
 	@Override
 	public String toString() {
 		return "Task [id=" + id + ", title=" + title + ", description=" + description + ", project=" + project.getId()
-				+ ", assignee=" + assignee.getId() + ", taskPriority=" + taskPriority.name() + ", taskStatus=" + taskStatus.name()
-				+ ", createdOn=" + createdOn + "]";
+				+ ", user=" + user.getId() + ", priority=" + priority.name() + ", status=" + status.name()
+				+ ", createdOn=" + createdOn + ", dueDate=" + dueDate + "]";
 	}
 }
