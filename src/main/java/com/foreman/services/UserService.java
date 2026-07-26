@@ -1,28 +1,35 @@
 package com.foreman.services;
 
-import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.User;
-import com.foreman.exception.DuplicateResourceException;
 import com.foreman.exception.ResourceNotFoundException;
 import com.foreman.repos.UserRepo;
 import com.foreman.repos.WorkspaceMembershipRepo;
+import com.foreman.security.CustomUserDetails;
 
 @Service
 @Transactional
+@Validated
 public class UserService {
 	
-	@Autowired
-	private UserRepo userRepo;
+	private final UserRepo userRepo;
+	private final WorkspaceMembershipRepo wmRepo;
 	
-	@Autowired
-	private WorkspaceMembershipRepo wmRepo;
+	UserService(UserRepo userRepo, 
+			WorkspaceMembershipRepo wmRepo) {
+		
+		this.userRepo = userRepo;
+		this.wmRepo = wmRepo;
+	}
+	
 
 	public List<User> getAllUsers() {
 		
@@ -51,18 +58,6 @@ public class UserService {
 				);
 		
 		return userDisplayResponseDto;
-	}
-	
-	
-	public void addOneUser(User user) {
-		
-		if(userRepo.existsByEmail(user.getEmail())){
-			
-			throw new DuplicateResourceException("User with email "+user.getEmail()+" already exists!");
-		}
-		
-		user.setCreatedOn(LocalDate.now());
-		userRepo.save(user);
 	}
 
 
@@ -93,5 +88,17 @@ public class UserService {
 		userRepo.delete(u);
 		
 		return u;
+	}
+	
+	
+	public User getLoggedInUser() {
+
+		Authentication authentication =
+	            SecurityContextHolder.getContext().getAuthentication();
+
+	    CustomUserDetails userDetails =
+	            (CustomUserDetails) authentication.getPrincipal();
+
+	    return userDetails.getUser();
 	}
 }

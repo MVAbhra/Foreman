@@ -5,11 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor
-public class ProjectDisplayDto {
+public class UserLoginResponseDto {
 
-	private Long id;
-	private String title;
-	private String description;
-	
-	private Long workspaceId;
+	private String token;
 }

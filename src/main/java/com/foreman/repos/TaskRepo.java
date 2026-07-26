@@ -26,4 +26,7 @@ public interface TaskRepo extends JpaRepository<Task, Long> {
 
 	
 	Optional<Task> findByIdAndProject_Id(Long taskId, Long projId);
+
+
+	boolean existsByIdAndProject_Id(Long taskId, Long projId);
 }

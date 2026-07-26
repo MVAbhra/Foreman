@@ -19,7 +19,10 @@ import com.foreman.dtos.ProjectDisplayDto;
 import com.foreman.entities.Project;
 import com.foreman.services.ProjectService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/workspaces/{wrkspcId}/projects")
 public class ProjectController {
@@ -48,7 +51,7 @@ public class ProjectController {
 	
 	@PostMapping
 	public ResponseEntity<String> createOneProject(@PathVariable Long wrkspcId, 
-			@RequestBody ProjectCreationAndUpdationDto dto) {
+			@RequestBody @Valid ProjectCreationAndUpdationDto dto) {
 		
 		projService.createOneProject(wrkspcId, dto);
 		
@@ -57,12 +60,12 @@ public class ProjectController {
 	
 	
 	@PutMapping("/{projId}/update")
-	public ResponseEntity<ProjectDisplayDto> updateOneProject(@PathVariable Long wrkspcId, @PathVariable Long projId,
-			@RequestBody ProjectCreationAndUpdationDto dto) {
+	public ResponseEntity<String> updateOneProject(@PathVariable Long wrkspcId, @PathVariable Long projId,
+			@RequestBody @Valid ProjectCreationAndUpdationDto dto) {
 		
-		ProjectDisplayDto updatedProjectDisplayDto = projService.updateOneProject(wrkspcId, projId, dto);
+		projService.updateOneProject(wrkspcId, projId, dto);
 		
-		return ResponseEntity.status(HttpStatus.OK).body(updatedProjectDisplayDto);
+		return ResponseEntity.status(HttpStatus.OK).body("Project "+projId+" was updated!");
 	}
 	
 	

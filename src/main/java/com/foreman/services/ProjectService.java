@@ -2,9 +2,9 @@ package com.foreman.services;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import com.foreman.dtos.ProjectCreationAndUpdationDto;
 import com.foreman.dtos.ProjectDisplayDto;
@@ -12,36 +12,35 @@ import com.foreman.entities.Project;
 import com.foreman.entities.ProjectMembership;
 import com.foreman.entities.User;
 import com.foreman.entities.Workspace;
+import com.foreman.entities.WorkspaceMembership;
 import com.foreman.enums.ProjectRole;
+import com.foreman.enums.WorkspaceRole;
+import com.foreman.exception.InvalidActionException;
 import com.foreman.exception.ResourceNotFoundException;
 import com.foreman.repos.ProjectMembershipRepo;
 import com.foreman.repos.ProjectRepo;
-import com.foreman.repos.UserRepo;
 import com.foreman.repos.WorkspaceMembershipRepo;
 import com.foreman.repos.WorkspaceRepo;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
+@Validated
+@RequiredArgsConstructor
 public class ProjectService {
 
-	@Autowired
-	private ProjectRepo projRepo;
-	
-	@Autowired
-	private ProjectMembershipRepo projMemRepo;
-	
-	@Autowired
-	private WorkspaceMembershipRepo wmRepo;
-	
-	@Autowired
-	private UserRepo userRepo;
-	
-	@Autowired
-	private WorkspaceRepo wRepo;
+	private final ProjectRepo pRepo;
+	private final ProjectMembershipRepo pMRepo;
+	private final WorkspaceMembershipRepo wMRepo;
+	private final WorkspaceRepo wRepo;
+	private final UserService uService;
 
 	public List<Project> getAllProjects(Long wrkspcId) {
 		
-		List<Project> projects = projRepo.findByWorkspace_Id(wrkspcId);
+		checkIfOwner(wrkspcId);
+		
+		List<Project> projects = pRepo.findByWorkspace_Id(wrkspcId);
 		
 		return projects;
 	}
@@ -49,91 +48,93 @@ public class ProjectService {
 	
 	public void createOneProject(Long wrkspcId, ProjectCreationAndUpdationDto dto) {
 		
-		Long workspaceId = wrkspcId;
-		Long managerId = dto.getManagerId();
+		//get logged in user
+		User currentUser = uService.getLoggedInUser();
 		
-		User manager = userRepo.findById(managerId).orElseThrow(() -> new ResourceNotFoundException("No such exists with id "+managerId+"!"));
+		//the user is allowed to create a project only if they belong to the workspace
+		boolean authorized = wMRepo.existsByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId());
 		
-		Workspace workspace = wRepo.findById(workspaceId).orElseThrow(() -> new ResourceNotFoundException("No such workspace exist with id "+workspaceId+"!"));
+		//get the workspace with wrkspcId
+		Workspace w = wRepo.findById(wrkspcId)
+				.orElseThrow(() -> 
+					new ResourceNotFoundException("Workspace "+wrkspcId+" does not exist!"));
 		
-		if(wmRepo.existsByWorkspace_IdAndUser_Id(workspaceId, managerId) == false) {
+		if(authorized == true) {
 			
-			throw new ResourceNotFoundException("User "+managerId+" doesn't belong to the workspace "+workspaceId+"!");
+			//create a new untracked project
+			Project p = new Project(dto.getTitle(), dto.getDescription(), w);
+			
+			//push it into the projects table and get back its tracked version
+			p = pRepo.save(p);
+			
+			//create a new project_membership to add the current user or creator as PROJECT_MANAGER
+			ProjectMembership pm = new ProjectMembership(p, currentUser, ProjectRole.PROJECT_MANAGER);
+			
+			//push it into the project_memberships table
+			pMRepo.save(pm);
 		}
-		
-		Project project = projRepo.save(
-				
-				new Project(
-				
-						dto.getTitle(),
-						dto.getDescription(),
-						workspace
-				)
-		);
-		
-		projMemRepo.save(
-		
-				new ProjectMembership(project, manager, ProjectRole.PROJECT_MANAGER)
-		);
+		else {
+			
+			throw new InvalidActionException("You ("+currentUser.getEmail()+") don't "
+					+ "belong to workspace "+wrkspcId+"!");
+		}
 	}
 
 	
 	public ProjectDisplayDto getOneProject(Long wrkspcId, Long projId) {
 		
-		 Project p = checkProjectExistenceInWorkspace(wrkspcId, projId);
+		//get the project if the it belongs to the workspace
+		Project p = pRepo.findByIdAndWorkspace_Id(projId, wrkspcId)
+				.orElseThrow(() -> 
+					new ResourceNotFoundException("Project "+projId+" does not belong to workspace "+wrkspcId+"!")
+				);
 		
-//		ProjectMembership managerMembership = projMemRepo.findByProject_IdAndProjectRole(projId, ProjectRole.valueOf("PROJECT_MANAGER"));
+		//method defined in utility section below
+		checkIfProjectMemberOrOwner(wrkspcId, projId);
 		
+		//passed the checks and authorized to view the project
+		ProjectDisplayDto dto = new ProjectDisplayDto(projId, p.getTitle(), p.getDescription(), wrkspcId);
 		
-		 
-		ProjectDisplayDto displayDto = new ProjectDisplayDto(
-				
-				projId, 
-				p.getTitle(), 
-				p.getDescription(), 
-				wrkspcId, 
-				p.getWorkspace().getName()
-//				managerMembership.getUser().getId()
-		);
-		
-		return displayDto;
+		return dto;
 	}
 
 
-	public ProjectDisplayDto updateOneProject(Long wrkspcId, Long projId, ProjectCreationAndUpdationDto dto) {
+	public void updateOneProject(Long wrkspcId, Long projId, ProjectCreationAndUpdationDto dto) {
 		
-		if(wRepo.existsById(wrkspcId) == false) {
-			
-			throw new ResourceNotFoundException("Workspace "+wrkspcId+" does not exist!");
-		}
+		//get the project if the it belongs to the workspace
+		Project p = pRepo.findByIdAndWorkspace_Id(projId, wrkspcId)
+				.orElseThrow(() -> 
+					new ResourceNotFoundException("Project "+projId+" does not belong to workspace "+wrkspcId+"!")
+				);
 		
-		Project p = projRepo.findByIdAndWorkspace_Id(projId, wrkspcId).orElseThrow(() -> 
-				new ResourceNotFoundException("Workspace "+wrkspcId+" does not contain project "+projId+"!")); 
+		//method defined in utility section below
+		checkIfProjectManagerOrOwner(wrkspcId, projId);
 		
+		//passed the checks and authorized to update project's details
 		p.setTitle(dto.getTitle());
 		p.setDescription(dto.getDescription());
-		
-		ProjectDisplayDto displayDto = getOneProject(wrkspcId, projId);
-		
-		return displayDto;
 	}
 
 
 	public void deleteOneProject(Long wrkspcId, Long projId) {
 
-		if(wRepo.existsById(wrkspcId) == false) {
-			
-			throw new ResourceNotFoundException("Workspace "+wrkspcId+" does not exist!");
-		}
+		//get the project if the it belongs to the workspace
+		Project p = pRepo.findByIdAndWorkspace_Id(projId, wrkspcId)
+				.orElseThrow(() -> 
+					new ResourceNotFoundException("Project "+projId+" does not belong to workspace "+wrkspcId+"!")
+				);
 		
-		Project p = projRepo.findByIdAndWorkspace_Id(projId, wrkspcId).orElseThrow(() -> 
-				new ResourceNotFoundException("Workspace "+wrkspcId+" does not contain project "+projId+"!"));
+		//method defined in utility section below
+		checkIfProjectManagerOrOwner(wrkspcId, projId);
 		
-		List<ProjectMembership> pms = projMemRepo.findByProject_Id(projId);
+		//find all the memberships related to the project
+		List<ProjectMembership> pms = pMRepo.findByProject_Id(projId);
 		
-		projMemRepo.deleteAll(pms);
+		//delete all related memberships
+		pMRepo.deleteAll(pms);
 		
-		projRepo.delete(p);
+		//then delete project
+		pRepo.delete(p);
 	}
 	
 	
@@ -147,9 +148,74 @@ public class ProjectService {
 			throw new ResourceNotFoundException("Workspace "+wrkspcId+" does not exist!");
 		}
 		
-		Project p = projRepo.findByIdAndWorkspace_Id(projId, wrkspcId).orElseThrow(() -> 
+		Project p = pRepo.findByIdAndWorkspace_Id(projId, wrkspcId).orElseThrow(() -> 
 		new ResourceNotFoundException("Workspace "+wrkspcId+" does not contain project "+projId+"!"));
 		
 		return p;
+	}
+	
+	
+	public void checkIfOwner(Long wrkspcId) {
+		
+		//get logged in user
+		User currentUser = uService.getLoggedInUser();
+		
+		//get the user's membership in the workspace
+		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to workspace "+wrkspcId+"!"));
+		
+		//if user is workspace's OWNER then return/authorize
+		if(wm.getWorkspaceRole() == WorkspaceRole.OWNER) return; 
+		
+		//if not OWNER
+		throw new InvalidActionException("You ("+currentUser.getEmail()+") require ownership of workspace "+wrkspcId+" to perform the action!");
+	}
+	
+	
+	public void checkIfProjectMemberOrOwner(Long wrkspcId, Long projId) {
+		
+		//get logged in user
+		User currentUser = uService.getLoggedInUser();
+		
+		//get the user's membership in the workspace
+		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to workspace "+wrkspcId+"!"));
+		
+		//if user is workspace's OWNER then return/authorize
+		if(wm.getWorkspaceRole() == WorkspaceRole.OWNER) return;
+		
+		//get the user's membership in the project
+		ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId()).
+				orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to project "+projId+"!"));
+		
+		//if user is project's member then return/authorize
+		if(pm != null) return;
+			
+		//if user is neither workspace's OWNER or project's member
+		throw new InvalidActionException("You ("+currentUser.getEmail()+") are not authorized to view project "+projId+"!");
+	}
+	
+	
+	public void checkIfProjectManagerOrOwner(Long wrkspcId, Long projId) {
+		
+		//get logged in user
+		User currentUser = uService.getLoggedInUser();
+		
+		//get the user's membership in the workspace
+		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
+				.orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to workspace "+wrkspcId+"!"));
+		
+		//if user is workspace's OWNER then return/authorize
+		if(wm.getWorkspaceRole() == WorkspaceRole.OWNER) return;
+		
+		//get the user's membership in the project
+		ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId()).
+				orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to project "+projId+"!"));
+		
+		//if user is project's PROJECT_MANAGER then return/authorize
+		if(pm.getProjectRole() == ProjectRole.PROJECT_MANAGER) return;
+		
+		//if user is neither workspace's OWNER or project's PROJECT_MANAGER
+		throw new InvalidActionException("You ("+currentUser.getEmail()+") are not authorized to update or delete project "+projId+"!");
 	}
 }

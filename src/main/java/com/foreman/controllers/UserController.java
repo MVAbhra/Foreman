@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +17,10 @@ import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.User;
 import com.foreman.services.UserService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -44,17 +46,8 @@ public class UserController {
 	}
 	
 	
-	@PostMapping
-	public ResponseEntity<String> addOneUser(@RequestBody User user) {
-		
-		userService.addOneUser(user);
-		
-		return ResponseEntity.status(HttpStatus.ACCEPTED).body("User created");
-	}
-	
-	
 	@PutMapping("/{id}/update")
-	public ResponseEntity<User> updateOneUser(@RequestBody User dto, @PathVariable Long id) {
+	public ResponseEntity<User> updateOneUser(@RequestBody @Valid User dto, @PathVariable Long id) {
 		
 		User updatedUser = userService.updateOneUser(dto, id); 
 		
@@ -68,5 +61,13 @@ public class UserController {
 		User deletedUser = userService.deleteOneUser(id);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(deletedUser);
+	}
+	
+	//-------- post spring security ----------------
+	
+	@GetMapping("/me")
+	public ResponseEntity<User> getLoggedInUser() {
+
+	    return ResponseEntity.ok(userService.getLoggedInUser());
 	}
 }

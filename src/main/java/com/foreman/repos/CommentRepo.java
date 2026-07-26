@@ -20,16 +20,21 @@ public interface CommentRepo extends JpaRepository<Comment, Long> {
             c.createdOn,
             c.task.id,
             c.user.id,
+            c.user.firstName,
+            c.user.lastName,
             c.task.project.id,
             c.task.project.workspace.id
         )
         FROM Comment c
         WHERE c.task.id = :taskId
-        ORDER BY c.createdOn ASC
+        ORDER BY c.createdOn DESC
     """)
     List<CommentDisplayResponseDto> getAllCommentsInTask(Long taskId);
 
 
     Optional<Comment> findByIdAndTask_Id(Long commentId, Long taskId);
+
+
+	List<Comment> findByTask_Id(Long taskId);
 
 }

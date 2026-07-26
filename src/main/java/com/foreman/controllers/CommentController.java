@@ -18,6 +18,10 @@ import com.foreman.dtos.CommentCreAndUpDto;
 import com.foreman.dtos.CommentDisplayResponseDto;
 import com.foreman.services.CommentService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/workspaces/{wrkspcId}/projects/{projId}/tasks/{taskId}/comments")
 public class CommentController {
@@ -43,27 +47,27 @@ public class CommentController {
             @PathVariable Long wrkspcId,
             @PathVariable Long projId,
             @PathVariable Long taskId,
-            @RequestBody CommentCreAndUpDto dto){
+            @RequestBody @Valid CommentCreAndUpDto dto){
 
-        cService.addOneComment(wrkspcId, projId, taskId, dto);
+        String message = cService.addOneComment(wrkspcId, projId, taskId, dto);
 
         return new ResponseEntity<>(
-                "Comment was added by user "+dto.getUserId()+" on task "+taskId+" in project "+projId+" successfully!",
+                message,
                 HttpStatus.CREATED);
     }
 
 
-    @GetMapping("/{commentId}")
-    public ResponseEntity<CommentDisplayResponseDto> getOneCommentInTask(
-            @PathVariable Long wrkspcId,
-            @PathVariable Long projId,
-            @PathVariable Long taskId,
-            @PathVariable Long commentId){
-
-        return new ResponseEntity<>(
-                cService.getOneCommentInTask(wrkspcId, projId, taskId, commentId),
-                HttpStatus.OK);
-    }
+//    @GetMapping("/{commentId}")
+//    public ResponseEntity<CommentDisplayResponseDto> getOneCommentInTask(
+//            @PathVariable Long wrkspcId,
+//            @PathVariable Long projId,
+//            @PathVariable Long taskId,
+//            @PathVariable Long commentId){
+//
+//        return new ResponseEntity<>(
+//                cService.getOneCommentInTask(wrkspcId, projId, taskId, commentId),
+//                HttpStatus.OK);
+//    }
 
 
     @PutMapping("/{commentId}")
@@ -72,7 +76,7 @@ public class CommentController {
             @PathVariable Long projId,
             @PathVariable Long taskId,
             @PathVariable Long commentId,
-            @RequestBody CommentCreAndUpDto dto){
+            @RequestBody @Valid CommentCreAndUpDto dto){
 
         cService.updateOneComment(wrkspcId, projId, taskId, commentId, dto);
 

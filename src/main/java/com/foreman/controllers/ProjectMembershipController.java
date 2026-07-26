@@ -18,6 +18,10 @@ import com.foreman.dtos.ProjMemInvDto;
 import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.services.ProjectMembershipService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/workspaces/{wrkspcId}/projects/{projId}/members")
 public class ProjectMembershipController {
@@ -38,16 +42,16 @@ public class ProjectMembershipController {
 	}
 	
 	
-	@GetMapping("/{memId}")
+//	@GetMapping("/{memId}")
 	public ResponseEntity<UserDisplayResponseDto> getOneProjectMember(
 				@PathVariable Long wrkspcId,
 				@PathVariable Long projId,
 				@PathVariable Long memId
 	){
 		
-		UserDisplayResponseDto projMember = projMemService.getOneProjectMember(wrkspcId, projId, memId);
+//		UserDisplayResponseDto projMember = projMemService.getOneProjectMember(wrkspcId, projId, memId);
 		
-		return ResponseEntity.status(HttpStatus.OK).body(projMember);
+		return ResponseEntity.status(HttpStatus.OK).body(null);
 	}
 	
 	
@@ -55,11 +59,11 @@ public class ProjectMembershipController {
 	public ResponseEntity<String> addOneProjectMember(
 			@PathVariable Long wrkspcId, 
 			@PathVariable Long projId,
-			@RequestBody ProjMemInvDto projMemInvDto){
+			@RequestBody @Valid ProjMemInvDto projMemInvDto){
 		
 		projMemService.addOneProjectMember(wrkspcId, projId, projMemInvDto);
 		
-		return ResponseEntity.status(HttpStatus.CREATED).body("User "+projMemInvDto.getUserId()+" added to project "
+		return ResponseEntity.status(HttpStatus.CREATED).body("User "+projMemInvDto.getEmail()+" added to project "
 				+projId+" with role "+projMemInvDto.getProjectRole().name()+"!");
 	}
 	
@@ -68,11 +72,11 @@ public class ProjectMembershipController {
 	public ResponseEntity<String> updateOneProjectMember(
 			@PathVariable Long wrkspcId, 
 			@PathVariable Long projId,
-			@RequestBody ProjMemInvDto projMemInvDto){
+			@RequestBody @Valid ProjMemInvDto projMemInvDto){
 		
 		projMemService.updateOneProjectMember(wrkspcId, projId, projMemInvDto);
 		
-		return ResponseEntity.status(HttpStatus.CREATED).body("User "+projMemInvDto.getUserId()+" inside project "
+		return ResponseEntity.status(HttpStatus.CREATED).body("User "+projMemInvDto.getEmail()+" inside project "
 				+projId+" was updated!");
 	}
 	

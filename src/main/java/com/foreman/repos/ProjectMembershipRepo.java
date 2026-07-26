@@ -50,7 +50,11 @@ public interface ProjectMembershipRepo extends JpaRepository<ProjectMembership, 
 			AND pm.project.id = :projId
 			AND wm.workspace.id = :wrkspcId
 			""")
-	Optional<UserDisplayResponseDto> getOneProjectMember(Long wrkspcId, Long projId, Long memId);
+	UserDisplayResponseDto getOneProjectMember(Long wrkspcId, Long projId, Long memId);
 
 	Optional<ProjectMembership> findByProject_IdAndUser_Id(Long projId, Long memId);
+
+	boolean existsByProject_IdAndProjectRole(Long projId, ProjectRole projectManager);
+
+	boolean existsByProject_IdAndUser_Id(Long projId, Long id);
 }

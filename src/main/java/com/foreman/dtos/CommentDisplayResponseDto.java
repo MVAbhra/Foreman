@@ -15,6 +15,8 @@ public class CommentDisplayResponseDto {
 
     private Long taskId;
     private Long userId;
+    private String firstName;
+    private String lastName;
     private Long projectId;
     private Long workspaceId;
 }

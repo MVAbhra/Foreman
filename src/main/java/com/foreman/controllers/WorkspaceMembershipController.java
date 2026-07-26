@@ -18,6 +18,10 @@ import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.dtos.WrkMemInvDto;
 import com.foreman.services.WorkspaceMembershipService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/workspaces/{wrkspcId}/members")
 public class WorkspaceMembershipController {
@@ -36,32 +40,32 @@ public class WorkspaceMembershipController {
 	
 	
 	@PostMapping
-	public ResponseEntity<String> addOneMember(@PathVariable Long wrkspcId, @RequestBody WrkMemInvDto dto) {
+	public ResponseEntity<String> addOneMember(@PathVariable Long wrkspcId, @RequestBody @Valid WrkMemInvDto dto) {
 		
 		wMService.addOneMember(wrkspcId, dto);
 		
-		return ResponseEntity.status(HttpStatus.OK).body("User "+dto.getUserId()+" added to workspace "+wrkspcId);
+		return ResponseEntity.status(HttpStatus.OK).body("User "+dto.getEmail()+" added to workspace "+wrkspcId);
 	}
 	
 	
 	@PutMapping
-	public ResponseEntity<String> updateOneMember(@PathVariable Long wrkspcId, @RequestBody WrkMemInvDto dto) {
+	public ResponseEntity<String> updateOneMember(@PathVariable Long wrkspcId, @RequestBody @Valid WrkMemInvDto dto) {
 		
 		wMService.updateOneMember(wrkspcId, dto);
 		
-		return ResponseEntity.status(HttpStatus.OK).body("User "+dto.getUserId()+" in workspace "+wrkspcId+" was updated!");
+		return ResponseEntity.status(HttpStatus.OK).body("User "+dto.getEmail()+" in workspace "+wrkspcId+" was updated!");
 	}
 	
 	
-	@GetMapping("/{memId}")
-	public ResponseEntity<UserDisplayResponseDto> getOneWorkspaceMember(
-			@PathVariable Long wrkspcId, 
-			@PathVariable Long memId) {
-		
-		UserDisplayResponseDto member = wMService.getOneWorkspaceMember(wrkspcId, memId);
-		
-		return ResponseEntity.status(HttpStatus.OK).body(member);
-	}
+//	@GetMapping("/{memId}")
+//	public ResponseEntity<UserDisplayResponseDto> getOneWorkspaceMember(
+//			@PathVariable Long wrkspcId, 
+//			@PathVariable Long memId) {
+//		
+//		UserDisplayResponseDto member = wMService.getOneWorkspaceMember(wrkspcId, memId);
+//		
+//		return ResponseEntity.status(HttpStatus.OK).body(member);
+//	}
 		
 
 	@DeleteMapping("/{memId}")

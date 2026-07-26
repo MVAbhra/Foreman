@@ -18,6 +18,10 @@ import com.foreman.dtos.TaskCreAndUpDto;
 import com.foreman.dtos.TaskDisplayResponseDto;
 import com.foreman.services.TaskService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/workspaces/{wrkspcId}/projects/{projId}/tasks")
 public class TaskController {
@@ -41,7 +45,7 @@ public class TaskController {
 	public ResponseEntity<String> addOneTask(
 			@PathVariable Long wrkspcId, 
 			@PathVariable Long projId,
-			@RequestBody TaskCreAndUpDto dto) {
+			@RequestBody @Valid TaskCreAndUpDto dto) {
 		
 		tService.addOneTask(wrkspcId, projId, dto);
 		
@@ -49,16 +53,16 @@ public class TaskController {
 	}
 	
 	
-	@GetMapping("/{taskId}")
-	public ResponseEntity<TaskDisplayResponseDto> getOneTaskInProject(
-			@PathVariable Long wrkspcId, 
-			@PathVariable Long projId,
-			@PathVariable Long taskId) {
-		
-		TaskDisplayResponseDto dto = tService.getOneTaskInProject(wrkspcId, projId, taskId);
-		
-		return new ResponseEntity<>(dto, HttpStatus.OK);
-	}
+//	@GetMapping("/{taskId}")
+//	public ResponseEntity<TaskDisplayResponseDto> getOneTaskInProject(
+//			@PathVariable Long wrkspcId, 
+//			@PathVariable Long projId,
+//			@PathVariable Long taskId) {
+//		
+//		TaskDisplayResponseDto dto = tService.getOneTaskInProject(wrkspcId, projId, taskId);
+//		
+//		return new ResponseEntity<>(dto, HttpStatus.OK);
+//	}
 	
 	
 	@PutMapping("/{taskId}")
@@ -66,7 +70,7 @@ public class TaskController {
 			@PathVariable Long wrkspcId, 
 			@PathVariable Long projId,
 			@PathVariable Long taskId,
-			@RequestBody TaskCreAndUpDto dto) {
+			@RequestBody @Valid TaskCreAndUpDto dto) {
 		
 		tService.updateOneTask(wrkspcId, projId, taskId, dto);
 		

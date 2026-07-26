@@ -2,7 +2,6 @@ package com.foreman.controllers;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,12 +17,17 @@ import com.foreman.dtos.WorkspaceCreationAndUpdationDto;
 import com.foreman.entities.Workspace;
 import com.foreman.services.WorkspaceService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/workspaces")
+@RequiredArgsConstructor
 public class WorkspaceController {
 
-	@Autowired
-	private WorkspaceService workspaceService;
+	private final WorkspaceService workspaceService;
 
 	
 	@GetMapping
@@ -45,7 +49,7 @@ public class WorkspaceController {
 	
 	
 	@PostMapping
-	public ResponseEntity<String> addOneWorkspace(@RequestBody WorkspaceCreationAndUpdationDto dto) {
+	public ResponseEntity<String> addOneWorkspace(@RequestBody @Valid WorkspaceCreationAndUpdationDto dto) {
 		
 		workspaceService.addOneWorkspace(dto);
 		
@@ -54,12 +58,12 @@ public class WorkspaceController {
 	
 	
 	@PutMapping("/{wrkspcId}/update")
-	public ResponseEntity<Workspace> updateOneWorkspace(@PathVariable Long wrkspcId, 
-			@RequestBody WorkspaceCreationAndUpdationDto dto) {
+	public ResponseEntity<String> updateOneWorkspace(@PathVariable Long wrkspcId, 
+			@RequestBody @Valid WorkspaceCreationAndUpdationDto dto) {
 		
-		Workspace w = workspaceService.updateOneWorkspace(wrkspcId, dto);
+		workspaceService.updateOneWorkspace(wrkspcId, dto);
 		
-		return ResponseEntity.status(HttpStatus.OK).body(w);
+		return ResponseEntity.status(HttpStatus.OK).body("Workspace "+wrkspcId+" was updated!");
 	}
 	
 	

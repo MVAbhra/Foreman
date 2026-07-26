@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.WorkspaceMembership;
+import com.foreman.enums.WorkspaceRole;
 
 @Repository
 public interface WorkspaceMembershipRepo extends JpaRepository<WorkspaceMembership, Long> {
@@ -45,4 +46,6 @@ public interface WorkspaceMembershipRepo extends JpaRepository<WorkspaceMembersh
 	Optional<UserDisplayResponseDto> getOneWorkspaceMember(Long wrkspcId, Long memId);
 
 	Optional<WorkspaceMembership> findByWorkspace_IdAndUser_Id(Long wrkspcId, Long userId);
+
+	boolean existsByWorkspace_IdAndUser_IdAndWorkspaceRole(Long wrkspcId, Long id, WorkspaceRole owner);
 }
