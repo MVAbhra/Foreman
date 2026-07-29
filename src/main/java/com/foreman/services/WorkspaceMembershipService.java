@@ -68,6 +68,8 @@ public class WorkspaceMembershipService {
 		if (wMRepo.existsByWorkspace_IdAndUser_Id(wrkspcId, u.getId()))
 			throw new DuplicateResourceException(
 					"User " + u.getId() + " already belongs to workspace " + wrkspcId + "!");
+
+		System.out.println("About to prepare mail details.");
 		
 		//create the invitation link. Clicking on which sends a request to React.
 		//React catches it and extracts workspaceid and email
@@ -77,6 +79,8 @@ public class WorkspaceMembershipService {
 				frontendDomain
 				+"/join?wrkspc="+w.getId()
 				+"&email="+URLEncoder.encode(u.getEmail(), StandardCharsets.UTF_8);
+
+		System.out.println("Prepared invitation link.");
 		
 		//create the email body
 		String mailMessage = 
@@ -85,7 +89,9 @@ public class WorkspaceMembershipService {
 				+" by "+owner.getFirstName()+" "+owner.getLastName()+" ("+owner.getEmail()+")!"
 				+"\nInvitation link: "+invitationLink
 				+"\nClick on the link join the Workspace.";
-				
+
+		System.out.println("Prepared mail body.");
+		
 		//send email to the user's email address
 		notifClient.sendNotification(
 				"New workspace invitation!",
