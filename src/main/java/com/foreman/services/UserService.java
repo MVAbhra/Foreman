@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.foreman.dtos.UserDisplayResponseDto;
 import com.foreman.entities.User;
@@ -15,20 +16,17 @@ import com.foreman.repos.UserRepo;
 import com.foreman.repos.WorkspaceMembershipRepo;
 import com.foreman.security.CustomUserDetails;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
 @Validated
+@RequiredArgsConstructor
 public class UserService {
 	
 	private final UserRepo userRepo;
 	private final WorkspaceMembershipRepo wmRepo;
-	
-	UserService(UserRepo userRepo, 
-			WorkspaceMembershipRepo wmRepo) {
-		
-		this.userRepo = userRepo;
-		this.wmRepo = wmRepo;
-	}
+	private final PasswordEncoder passwordEncoder;
 	
 
 	public List<User> getAllUsers() {
@@ -69,7 +67,7 @@ public class UserService {
 		userToBeUpdated.setFirstName(dto.getFirstName());
 		userToBeUpdated.setLastName(dto.getLastName());
 		userToBeUpdated.setEmail(dto.getEmail());
-		userToBeUpdated.setPassword(dto.getPassword());
+		userToBeUpdated.setPassword(passwordEncoder.encode(dto.getPassword()));
 		
 		userRepo.save(userToBeUpdated);
 		

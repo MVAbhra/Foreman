@@ -11,7 +11,6 @@ import com.foreman.entities.User;
 import com.foreman.entities.Workspace;
 import com.foreman.entities.WorkspaceMembership;
 import com.foreman.enums.WorkspaceRole;
-import com.foreman.exception.InvalidActionException;
 import com.foreman.exception.ResourceNotFoundException;
 import com.foreman.repos.WorkspaceMembershipRepo;
 import com.foreman.repos.WorkspaceRepo;
@@ -27,6 +26,7 @@ public class WorkspaceService {
 	private final WorkspaceRepo wRepo;
 	private final WorkspaceMembershipRepo wMRepo;
 	private final UserService uService;
+	private final AutherizationService azService;
 
 	public List<Workspace> getAllWorkspaces() {
 
@@ -41,7 +41,7 @@ public class WorkspaceService {
 		Workspace w = wRepo.findById(wrkspcId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workspace " + wrkspcId + " does not exist!"));
 
-		checkIfWorkspaceMember(wrkspcId);
+		azService.checkIfWorkspaceMember(wrkspcId);
 
 		return w;
 	}
@@ -64,7 +64,7 @@ public class WorkspaceService {
 		Workspace w = wRepo.findById(wrkspcId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workspace " + wrkspcId + " does not exist!"));
 
-		checkIfOwner(wrkspcId);
+		azService.checkIfOwner(wrkspcId);
 
 		w.setName(dto.getName());
 	}
@@ -74,42 +74,10 @@ public class WorkspaceService {
 		Workspace w = wRepo.findById(wrkspcId)
 				.orElseThrow(() -> new ResourceNotFoundException("Workspace " + wrkspcId + " does not exist!"));
 
-		checkIfOwner(wrkspcId);
+		azService.checkIfOwner(wrkspcId);
 
 		wMRepo.deleteByWorkspace_Id(wrkspcId);
 
 		wRepo.delete(w);
-	}
-
-	// -------------------------------- Utility methods --------------------------------
-
-	public void checkIfWorkspaceMember(Long wrkspcId) {
-
-		User currentUser = uService.getLoggedInUser();
-
-		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"You (" + currentUser.getEmail() + ") do not belong to workspace " + wrkspcId + "!"));
-
-		if (wm != null)
-			return;
-
-		throw new InvalidActionException(
-				"You (" + currentUser.getEmail() + ") are not authorized to access workspace " + wrkspcId + "!");
-	}
-
-	public void checkIfOwner(Long wrkspcId) {
-
-		User currentUser = uService.getLoggedInUser();
-
-		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"You (" + currentUser.getEmail() + ") do not belong to workspace " + wrkspcId + "!"));
-
-		if (wm.getWorkspaceRole() == WorkspaceRole.OWNER)
-			return;
-
-		throw new InvalidActionException("You (" + currentUser.getEmail() + ") require ownership of workspace "
-				+ wrkspcId + " to perform the action!");
 	}
 }

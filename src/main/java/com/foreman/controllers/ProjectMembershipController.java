@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foreman.dtos.ProjMemInvDto;
@@ -27,7 +28,7 @@ import jakarta.validation.Valid;
 public class ProjectMembershipController {
 
 	@Autowired
-	private ProjectMembershipService projMemService;
+	private ProjectMembershipService pMService;
 	
 	
 	@GetMapping
@@ -36,35 +37,33 @@ public class ProjectMembershipController {
 				@PathVariable Long projId
 	){
 		
-		List<UserDisplayResponseDto> projMembers = projMemService.getAllProjectMembers(wrkspcId, projId);
+		List<UserDisplayResponseDto> projMembers = pMService.getAllProjectMembers(wrkspcId, projId);
 		
 		return ResponseEntity.status(HttpStatus.OK).body(projMembers);
 	}
 	
 	
-//	@GetMapping("/{memId}")
-	public ResponseEntity<UserDisplayResponseDto> getOneProjectMember(
-				@PathVariable Long wrkspcId,
-				@PathVariable Long projId,
-				@PathVariable Long memId
-	){
-		
-//		UserDisplayResponseDto projMember = projMemService.getOneProjectMember(wrkspcId, projId, memId);
-		
-		return ResponseEntity.status(HttpStatus.OK).body(null);
-	}
-	
-	
 	@PostMapping
-	public ResponseEntity<String> addOneProjectMember(
+	public ResponseEntity<String> inviteOneProjectMember(
 			@PathVariable Long wrkspcId, 
 			@PathVariable Long projId,
 			@RequestBody @Valid ProjMemInvDto projMemInvDto){
 		
-		projMemService.addOneProjectMember(wrkspcId, projId, projMemInvDto);
+		String message = pMService.inviteOneProjectMember(wrkspcId, projId, projMemInvDto);
 		
-		return ResponseEntity.status(HttpStatus.CREATED).body("User "+projMemInvDto.getEmail()+" added to project "
-				+projId+" with role "+projMemInvDto.getProjectRole().name()+"!");
+		return new ResponseEntity<>(message, HttpStatus.OK);
+	}
+	
+	
+	@GetMapping("/join")
+	public ResponseEntity<String> addOneProjectMember(
+			@PathVariable Long wrkspcId,
+			@PathVariable Long projId,
+			@RequestParam String email) {
+		
+		pMService.addOneProjectMember(wrkspcId, projId, email);
+		
+		return new ResponseEntity<>("User ("+email+") joined project "+projId+" in workspace "+wrkspcId+"!", HttpStatus.CREATED);
 	}
 	
 	
@@ -74,7 +73,7 @@ public class ProjectMembershipController {
 			@PathVariable Long projId,
 			@RequestBody @Valid ProjMemInvDto projMemInvDto){
 		
-		projMemService.updateOneProjectMember(wrkspcId, projId, projMemInvDto);
+		pMService.updateOneProjectMember(wrkspcId, projId, projMemInvDto);
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body("User "+projMemInvDto.getEmail()+" inside project "
 				+projId+" was updated!");
@@ -87,7 +86,7 @@ public class ProjectMembershipController {
 			@PathVariable Long projId,
 			@PathVariable Long memId){
 		
-		projMemService.deleteOneProjectMember(wrkspcId, projId, memId);
+		pMService.deleteOneProjectMember(wrkspcId, projId, memId);
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body("User "+memId+" removed from project "+projId+"!");
 	}

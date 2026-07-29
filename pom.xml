@@ -10,10 +10,10 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.cdac</groupId>
-	<artifactId>spring_boot_backend_template</artifactId>
+	<artifactId>foreman-backend</artifactId>
 	<version>0.0.1</version>
-	<name>spring_boot_backend_template</name>
-	<description>Template for Spring Boot based Backend REST API</description>
+	<name>Foreman Backend</name>
+	<description>RestAPI backend for Foreman</description>
 	<url />
 	<licenses>
 		<license />

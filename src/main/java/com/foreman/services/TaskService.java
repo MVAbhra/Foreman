@@ -9,10 +9,11 @@ import com.foreman.entities.Task;
 import com.foreman.entities.User;
 import com.foreman.entities.WorkspaceMembership;
 import com.foreman.enums.ProjectRole;
+import com.foreman.enums.TaskStatus;
 import com.foreman.enums.WorkspaceRole;
 import com.foreman.exception.InvalidActionException;
 import com.foreman.exception.ResourceNotFoundException;
-
+import com.foreman.microservices.notification.NotificationClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -41,12 +42,14 @@ public class TaskService {
 	private final ProjectRepo pRepo;
 	private final UserRepo uRepo;
 	private final CommentRepo cRepo;
+	private final NotificationClient notifClient;
+	private final AutherizationService azService;
 	
 
 	public List<TaskDisplayResponseDto> getAllTasksInProject(Long wrkspcId, Long projId) {
 		
 		//method defined in utility section below
-		checkIfProjectMemberOrOwner(wrkspcId, projId);
+		azService.checkIfProjectMemberOrOwner(wrkspcId, projId);
 		
 		List<TaskDisplayResponseDto> tasks = tRepo.getAllTasksInProject(projId);
 		
@@ -54,10 +57,21 @@ public class TaskService {
 	}
 
 	
+	public List<TaskDisplayResponseDto> getSearchedTasksInProject(Long wrkspcId, Long projId, String keyword) {
+		
+		List<TaskDisplayResponseDto> tasks = getAllTasksInProject(wrkspcId, projId);
+		
+		return tasks.stream()
+				.filter(t -> t.getTitle().contains(keyword) 
+						|| t.getDescription().contains(keyword))
+				.toList();
+	}
+
+	
 	public void addOneTask(Long wrkspcId, Long projId, TaskCreAndUpDto dto) {
 		
 		//method defined in utility section below
-		checkIfProjectManagerOrOwner(wrkspcId, projId);
+		azService.checkIfProjectManagerOrOwner(wrkspcId, projId);
 		
 		//get the project
 		Project p = pRepo.findById(projId).orElseThrow();
@@ -79,43 +93,104 @@ public class TaskService {
 				dto.getDueDate());
 		
 		//save the task
-		tRepo.save(t);		
+		tRepo.save(t);	
+		
+		notifClient.sendNotification(
+				
+					//title
+					"New task assigned to you!",
+					
+					//message
+					"Project: "+p.getTitle()
+					+"\nTask "+dto.getTitle()+" was assigned to you ("+u.getEmail()+")."
+					+"\nPriority: "+dto.getPriority()
+					+"\nDue date:"+dto.getDueDate(),
+					
+					//receiverId
+					u.getId(), 
+					
+					//receiverEmail
+					u.getEmail()
+		);
 	}
 	
 	
 	public void updateOneTask(Long wrkspcId, Long projId, Long taskId, TaskCreAndUpDto dto) {
 		
 		//method defined in utility section below
-		checkIfProjectMemberOrOwner(wrkspcId, projId);
+		azService.checkIfProjectMemberOrOwner(wrkspcId, projId);
 		
+				
 		//find the task
 		Task t = tRepo.findByIdAndProject_Id(taskId, projId).orElseThrow(() -> 
 				new ResourceNotFoundException("Task "+taskId+" does not  in project "+projId+"!"));
 		
+		
 		//find current user
 		User currentUser = uService.getLoggedInUser();
+		
 		
 		//find current user's membership in workspace
 		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId()).orElseThrow();
 		
-		//find current user's membership in project
-		ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId()).orElseThrow();
+		
+		//find current user's membership in project if not owner
+		ProjectMembership pm = null;
+		if(wm.getWorkspaceRole() != WorkspaceRole.OWNER)
+			pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId()).orElseThrow();
+		
 		
 		//check if current user is workspace's OWNER or project's PROJECT_MANAGER
 		//if yes, then they can modify the following fields in a Task
 		if(wm.getWorkspaceRole() == WorkspaceRole.OWNER || pm.getProjectRole() == ProjectRole.PROJECT_MANAGER) {
+			
+			//get back the message based on the changes made
+			String mailMessage = checkTaskChanges(dto, t);
 			
 			t.setTitle(dto.getTitle());
 			t.setDescription(dto.getDescription());
 			t.setPriority(dto.getPriority());
 			t.setDueDate(dto.getDueDate());
 			t.setStatus(dto.getStatus());
+			
+			//send a mail to the assignee/developer of the task about it
+			if(mailMessage != null)
+				notifClient.sendNotification(
+						"Task modified!", 
+						
+						mailMessage, 
+						
+						t.getUser().getId(), 
+						
+						t.getUser().getEmail());
 		}
 		
 		//if current user is a DEVELOPER
 		else {
 			
 			t.setStatus(dto.getStatus());
+			
+			//if the developer completes the task then find the manager and send them a mail about it
+			if(t.getStatus() == TaskStatus.DONE) {
+				
+				ProjectMembership managerMemberhsip = pMRepo.findByProject_IdAndProjectRole(projId, ProjectRole.PROJECT_MANAGER);
+				
+				if(managerMemberhsip != null) {
+					
+					User receiver = managerMemberhsip.getUser();
+					
+					notifClient.sendNotification(
+							"Task modified",
+							
+							"Project: "+t.getProject().getTitle()
+							+"\nTask "+t.getTitle()+" was completed by "
+							+t.getUser().getFirstName()+" "+t.getUser().getLastName(), 
+							
+							receiver.getId(),
+							
+							receiver.getEmail());
+				}
+			}
 		}
 	}
 	
@@ -123,7 +198,7 @@ public class TaskService {
 	public void deleteOneTask(Long wrkspcId, Long projId, Long taskId) {
 		
 		//method defined in utility section below
-		checkIfProjectManagerOrOwner(wrkspcId, projId);
+		azService.checkIfProjectManagerOrOwner(wrkspcId, projId);
 		
 		//find the task
 		Task t = tRepo.findByIdAndProject_Id(taskId, projId).orElseThrow(() -> 
@@ -139,53 +214,44 @@ public class TaskService {
 		tRepo.delete(t);		
 	}
 	
-	//-----------------------------------------Utility methods--------------------------------------------------
 	
+	//------------------- utility methods --------------------
 	
-	public void checkIfProjectMemberOrOwner(Long wrkspcId, Long projId) {
+	public String checkTaskChanges(TaskCreAndUpDto dto, Task t) {
+		
+		boolean changesMade = false;
+		
+		StringBuilder mailMessage = new StringBuilder(
+				"Project: "+t.getProject().getTitle()
+				+"\nFollowing changes were made to task "
+				+t.getTitle()+":\n");
+		
+		if(!dto.getTitle().equals(t.getTitle())
+				|| !dto.getDescription().equals(t.getDescription())) {
 			
-			//get logged in user
-			User currentUser = uService.getLoggedInUser();
+			mailMessage.append("\n\tTitle or description were changed");
+			changesMade = true;
+		}
+		if(dto.getDueDate().equals(t.getDueDate())) {
 			
-			//get the user's membership in the workspace
-			WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
-					.orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to workspace "+wrkspcId+"!"));
+			mailMessage.append("\n\tDue date changed to: "+dto.getDueDate());
+			changesMade = true;
+		}
+		if(dto.getPriority() != t.getPriority()) {
 			
-			//if user is workspace's OWNER then return/authorize
-			if(wm.getWorkspaceRole() == WorkspaceRole.OWNER) return;
+			mailMessage.append("\n\tPriority changed to: "+dto.getPriority());
+			changesMade = true;
+		}
+		if(dto.getStatus() != t.getStatus()) {
 			
-			//get the user's membership in the project
-			ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId()).
-					orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to project "+projId+"!"));
-			
-			//if user is project's member then return/authorize
-			if(pm != null) return;
-				
-			//if user is neither workspace's OWNER or project's member
-			throw new InvalidActionException("You ("+currentUser.getEmail()+") are not authorized to view project "+projId+"!");
-	}
-	
-	
-	public void checkIfProjectManagerOrOwner(Long wrkspcId, Long projId) {
+			mailMessage.append("\n\tStatus changed to: "+dto.getStatus());
+			changesMade = true;
+		}
 		
-		//get logged in user
-		User currentUser = uService.getLoggedInUser();
+		if(changesMade == true)
+			return mailMessage.toString();
 		
-		//get the user's membership in the workspace
-		WorkspaceMembership wm = wMRepo.findByWorkspace_IdAndUser_Id(wrkspcId, currentUser.getId())
-				.orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to workspace "+wrkspcId+"!"));
-		
-		//if user is workspace's OWNER then return/authorize
-		if(wm.getWorkspaceRole() == WorkspaceRole.OWNER) return;
-		
-		//get the user's membership in the project
-		ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId()).
-				orElseThrow(() -> new ResourceNotFoundException("You ("+currentUser.getEmail()+") do not belong to project "+projId+"!"));
-		
-		//if user is project's PROJECT_MANAGER then return/authorize
-		if(pm.getProjectRole() == ProjectRole.PROJECT_MANAGER) return;
-		
-		//if user is neither workspace's OWNER or project's PROJECT_MANAGER
-		throw new InvalidActionException("You ("+currentUser.getEmail()+") are not authorized to update or delete project "+projId+"!");
+		else
+			return null;
 	}
 }

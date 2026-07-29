@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foreman.dtos.TaskCreAndUpDto;
@@ -88,5 +89,17 @@ public class TaskController {
 		tService.deleteOneTask(wrkspcId, projId, taskId);
 		
 		return new ResponseEntity<>("Task "+taskId+" in project "+projId+" was deleted!", HttpStatus.OK);
+	}
+	
+	
+	@GetMapping("/search")
+	public ResponseEntity<List<TaskDisplayResponseDto>> searchTasks(
+			@PathVariable Long wrkspcId, 
+			@PathVariable Long projId,
+			@RequestParam String keyword) {
+		
+		List<TaskDisplayResponseDto> tasks = tService.getSearchedTasksInProject(wrkspcId, projId, keyword);
+	
+		return new ResponseEntity<>(tasks, HttpStatus.OK);
 	}
 }

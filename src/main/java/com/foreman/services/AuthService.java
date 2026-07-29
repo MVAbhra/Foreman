@@ -18,53 +18,48 @@ import com.foreman.exception.DuplicateResourceException;
 import com.foreman.repos.UserRepo;
 import com.foreman.security.CustomUserDetails;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
 @Transactional
 @Validated
+@RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepo userRepo;
+    private final UserRepo uRepo;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 	private final JwtService jwtService;
-
-	AuthService(UserService userService, 
-			UserRepo userRepo,
-			PasswordEncoder passwordEncoder,
-			AuthenticationManager authenticationManager,
-			JwtService jwtService) {
-		
-		this.userRepo = userRepo;
-		this.passwordEncoder = passwordEncoder;
-		this.authenticationManager = authenticationManager;
-		this.jwtService = jwtService;
-	}
 
 	public void register(UserRegisterRequestDto dto) {
 		
 		//moved the following actions from UserService into here
 		//commented out UserService.addOneUser()
-		if(userRepo.existsByEmail(dto.getEmail())){
+		if(uRepo.existsByEmail(dto.getEmail())){
 			
 			throw new DuplicateResourceException("User with email "+dto.getEmail()+" already exists!");
 		}
-		
-		dto.setPassword(passwordEncoder.encode(dto.getPassword()));
 		
 		User user = new User(
 			 dto.getFirstName(), 
 			 dto.getLastName(), 
 			 dto.getEmail(), 
-			 dto.getPassword());
+			 passwordEncoder.encode(dto.getPassword()));
 		 
 		user.setCreatedOn(LocalDate.now());
 		
 		//saving the user
-		userRepo.save(user);
+		uRepo.save(user);
 	}
 
 	public UserLoginResponseDto login(UserLoginRequestDto dto) {
 		
+		//authenticate() calls Spring to authenticate the user details
+		//Spring calls CustomUserDetailsService.loadUserByUsername() which returns a user
+		//wrapped within CustomeUserDetails object, because Spring only understands that, not User
+		//Spring does CustomUserDetails.getPassword() and calls BCryptPasswordEncoder.matches()
+		//this compares dto.getPassword() and customUserDetails.getPassword()
+		//if successful authentication object is returned or else Status 401
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword()));
 		

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.foreman.dtos.UserDisplayResponseDto;
@@ -40,32 +41,38 @@ public class WorkspaceMembershipController {
 	
 	
 	@PostMapping
-	public ResponseEntity<String> addOneMember(@PathVariable Long wrkspcId, @RequestBody @Valid WrkMemInvDto dto) {
+	public ResponseEntity<String> inviteOneMember(
+			@PathVariable Long wrkspcId, 
+			@RequestBody @Valid WrkMemInvDto dto) {
 		
-		wMService.addOneMember(wrkspcId, dto);
+		String message = wMService.inviteOneMember(wrkspcId, dto);
 		
-		return ResponseEntity.status(HttpStatus.OK).body("User "+dto.getEmail()+" added to workspace "+wrkspcId);
+		return new ResponseEntity<>(message, HttpStatus.OK);
+	}
+	
+	
+	@GetMapping("/join")
+	public ResponseEntity<String> addOneMember(
+			@PathVariable Long wrkspcId,
+			@RequestParam String email) {
+		
+		wMService.addOneMember(wrkspcId, email);
+		
+		return new ResponseEntity<>(
+				"User ("+email+") added to workspace "+wrkspcId+"!", 
+				HttpStatus.CREATED);
 	}
 	
 	
 	@PutMapping
-	public ResponseEntity<String> updateOneMember(@PathVariable Long wrkspcId, @RequestBody @Valid WrkMemInvDto dto) {
+	public ResponseEntity<String> updateOneMember(
+			@PathVariable Long wrkspcId, 
+			@RequestBody @Valid WrkMemInvDto dto) {
 		
 		wMService.updateOneMember(wrkspcId, dto);
 		
 		return ResponseEntity.status(HttpStatus.OK).body("User "+dto.getEmail()+" in workspace "+wrkspcId+" was updated!");
 	}
-	
-	
-//	@GetMapping("/{memId}")
-//	public ResponseEntity<UserDisplayResponseDto> getOneWorkspaceMember(
-//			@PathVariable Long wrkspcId, 
-//			@PathVariable Long memId) {
-//		
-//		UserDisplayResponseDto member = wMService.getOneWorkspaceMember(wrkspcId, memId);
-//		
-//		return ResponseEntity.status(HttpStatus.OK).body(member);
-//	}
 		
 
 	@DeleteMapping("/{memId}")
