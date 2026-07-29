@@ -10,10 +10,13 @@ public class NotificationClient {
 	
 	private final RestClient restClient;
 
+	@Value("${notification.service.url}")
+	private String notifUrl;
+
     public NotificationClient(RestClient.Builder builder) {
         
     	this.restClient = builder
-                .baseUrl("http://localhost:5092")
+                .baseUrl(notifUrl)
                 .build();
     }
     
