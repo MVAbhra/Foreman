@@ -1,5 +1,7 @@
 package com.foreman.microservices.notification;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
@@ -10,16 +12,15 @@ public class NotificationClient {
 	
 	private final RestClient restClient;
 
-	@Value("${notification.service.url}")
-	private String notifUrl;
-
-    public NotificationClient(RestClient.Builder builder) {
+	 public NotificationClient(
+			RestClient.Builder builder,
+			@Value("${notification.service.url}") String notifUrl) {
         
-    	this.restClient = builder
-                .baseUrl(notifUrl)
-                .build();
-
-		System.out.println(notifUrl);
+	    	this.restClient = builder
+	                .baseUrl(notifUrl)
+	                .build();
+	
+			System.out.println(notifUrl);
     }
     
     
