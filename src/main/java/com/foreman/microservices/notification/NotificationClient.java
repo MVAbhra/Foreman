@@ -18,6 +18,8 @@ public class NotificationClient {
     	this.restClient = builder
                 .baseUrl(notifUrl)
                 .build();
+
+		System.out.println(notifUrl);
     }
     
     
@@ -30,11 +32,15 @@ public class NotificationClient {
     	NotificationCreDto dto = new NotificationCreDto(title, 
     			message, false, LocalDateTime.now(), 
     			receiverId, receiverEmail);
+
+		System.out.println("Created mail.");
    
     	restClient.post()
         .uri("/api/notifications")
         .body(dto)
         .retrieve()
         .toBodilessEntity();
+
+		System.out.println("Passed mail to microservice.");
     }
 }
