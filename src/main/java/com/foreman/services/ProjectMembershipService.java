@@ -85,7 +85,7 @@ public class ProjectMembershipService {
 		//which fires the corresponding addOneMember() method here
 		String invitationLink = 
 				frontendDomain
-				+"/join?projId="+p.getId()
+				+"/join-project?projId="+p.getId()
 				+"&email="+URLEncoder.encode(u.getEmail(), StandardCharsets.UTF_8);
 		
 		//create the email body
