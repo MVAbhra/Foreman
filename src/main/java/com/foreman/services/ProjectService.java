@@ -37,9 +37,33 @@ public class ProjectService {
 
 	public List<Project> getAllProjects(Long wrkspcId) {
 		
-		azService.checkIfOwner(wrkspcId);
+		List<Project> projects = null;
 		
-		List<Project> projects = pRepo.findByWorkspace_Id(wrkspcId);
+		try {
+			
+			//if the current user is OWNER, they can see all the projects in the workspace
+			azService.checkIfOwner(wrkspcId);
+			return pRepo.findByWorkspace_Id(wrkspcId);
+		}
+		catch(InvalidActionException ex) {
+			
+			//if the current user is a NON-OWNER workspace member, 
+			//then they can only see projects inside the workspace, CREATED BY THEM.
+			azService.checkIfWorkspaceMember(wrkspcId);					
+				
+			User u = uService.getLoggedInUser();
+			
+			//check the project memberships table and find all the memberships 
+			//with the current user's id and where the person is a MANAGER
+			List<ProjectMembership> pms = pMRepo.findAllByUser_Id(u.getId());
+			
+			projects = pms.stream()
+						//extract projects from each memberships
+						.map(pm -> pm.getProject())
+						//filter in all the projects which have this workspace id
+						.filter(p -> p.getWorkspace().getId().equals(wrkspcId))
+						.toList();
+		}
 		
 		return projects;
 	}
