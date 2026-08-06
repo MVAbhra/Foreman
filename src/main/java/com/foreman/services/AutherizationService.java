@@ -22,7 +22,7 @@ public class AutherizationService {
 	private final WorkspaceMembershipRepo wMRepo;
 	private final ProjectMembershipRepo pMRepo;
 
-	public void checkIfWorkspaceMember(Long wrkspcId) {
+	public boolean checkIfWorkspaceMember(Long wrkspcId) {
 
 		User currentUser = uService.getLoggedInUser();
 
@@ -31,13 +31,13 @@ public class AutherizationService {
 						"You (" + currentUser.getEmail() + ") do not belong to workspace " + wrkspcId + "!"));
 
 		if (wm != null)
-			return;
+			return true;
 
 		throw new InvalidActionException(
 				"You (" + currentUser.getEmail() + ") are not authorized to access workspace " + wrkspcId + "!");
 	}
 
-	public void checkIfOwner(Long wrkspcId) {
+	public boolean checkIfOwner(Long wrkspcId) {
 
 		User currentUser = uService.getLoggedInUser();
 
@@ -46,13 +46,13 @@ public class AutherizationService {
 						"You (" + currentUser.getEmail() + ") do not belong to workspace " + wrkspcId + "!"));
 
 		if (wm.getWorkspaceRole() == WorkspaceRole.OWNER)
-			return;
+			return true;
 
 		throw new InvalidActionException("You (" + currentUser.getEmail() + ") require ownership of workspace "
 				+ wrkspcId + " to perform the action!");
 	}
 
-	public void checkIfProjectMemberOrOwner(Long wrkspcId, Long projId) {
+	public boolean checkIfProjectMemberOrOwner(Long wrkspcId, Long projId) {
 
 		// get logged in user
 		User currentUser = uService.getLoggedInUser();
@@ -64,7 +64,7 @@ public class AutherizationService {
 
 		// if user is workspace's OWNER then return/authorize
 		if (wm.getWorkspaceRole() == WorkspaceRole.OWNER)
-			return;
+			return true;
 
 		// get the user's membership in the project
 		ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId())
@@ -73,14 +73,14 @@ public class AutherizationService {
 
 		// if user is project's member then return/authorize
 		if (pm != null)
-			return;
+			return true;
 
 		// if user is neither workspace's OWNER or project's member
 		throw new InvalidActionException(
 				"You (" + currentUser.getEmail() + ") are not authorized to view project " + projId + "!");
 	}
 
-	public void checkIfProjectManagerOrOwner(Long wrkspcId, Long projId) {
+	public boolean checkIfProjectManagerOrOwner(Long wrkspcId, Long projId) {
 
 		// get logged in user
 		User currentUser = uService.getLoggedInUser();
@@ -92,7 +92,7 @@ public class AutherizationService {
 
 		// if user is workspace's OWNER then return/authorize
 		if (wm.getWorkspaceRole() == WorkspaceRole.OWNER)
-			return;
+			return true;
 
 		// get the user's membership in the project
 		ProjectMembership pm = pMRepo.findByProject_IdAndUser_Id(projId, currentUser.getId())
@@ -101,7 +101,7 @@ public class AutherizationService {
 
 		// if user is project's PROJECT_MANAGER then return/authorize
 		if (pm.getProjectRole() == ProjectRole.PROJECT_MANAGER)
-			return;
+			return true;
 
 		// if user is neither workspace's OWNER or project's PROJECT_MANAGER
 		throw new InvalidActionException(
