@@ -23,6 +23,11 @@ public class UserRegisterRequestDto {
 	@Size(max = 254, message = "Email address cannot exceed 254 characters")
 	private String email;
 	
-	@NotBlank
+	@NotBlank(message = "Password cannot be empty or blank")
+	@Size(min = 6, message = "Password must be at least 6 characters long")
+	@Pattern(
+		regexp = "^(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{6,}$",
+		message = "Password must be at least 6 characters long, contain at least one uppercase letter and one special character"
+	)
 	private String password;
 }
