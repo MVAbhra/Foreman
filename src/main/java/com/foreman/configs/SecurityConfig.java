@@ -47,7 +47,7 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173",
-            "https://foreman-project.netlify.app/"
+            "https://foreman-project.netlify.app"
         ));
 
         configuration.setAllowedMethods(List.of(
