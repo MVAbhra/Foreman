@@ -1,5 +1,10 @@
 # Foreman Backend
 
+## Deployment can be found at
+```
+https://foreman-project.netlify.app/
+```
+
 A REST API backend for **Foreman**, a project/task management tool. Built with Spring Boot 3.5 (Java 21), it handles workspaces, projects, tasks, comments, memberships, and JWT-based authentication.
 
 ## Tech Stack
